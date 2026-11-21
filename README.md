@@ -4,11 +4,11 @@ The staff dashboard for **DualSphere**, a social network with both identity-base
 
 This repo is one of three:
 
-| Repo | What it is | Default port |
-| --- | --- | --- |
-| **Admin** (this repo) | The staff / moderation panel (Next.js) | `3001` |
-| Frontend | The user-facing Next.js web app | `3000` |
-| Backend | Express API, PostgreSQL, Socket.io | `4000` |
+| Repo | What it is |
+| --- | --- |
+| **Admin** (this repo) | The staff / moderation panel (Next.js) |
+| Frontend | The user-facing Next.js web app |
+| Backend | Express API, PostgreSQL, Socket.io |
 
 The panel has no data of its own. Everything comes from the backend's `/api/v1/admin` and `/api/v1/moderation` endpoints, and the backend enforces all permissions.
 
@@ -35,22 +35,7 @@ Only accounts with the **`moderator`** or **`admin`** role can sign in.
 
 ---
 
-## Pages
-
-| Page | What it does |
-| --- | --- |
-| **Dashboard** | Platform stats and activity charts |
-| **Reports** | Report queue for posts, comments, messages and users: dismiss, review or take action |
-| **Posts** | Browse all posts, hide / restore |
-| **Comments** | Browse all comments, hide / restore |
-| **Abuse flags** | Posts flagged by the automatic spam / abuse filters |
-| **Users** | Search accounts, see details, ban / unban, verify, reset abuse score, revoke sessions, reset 2FA, change roles, edit moderator permissions, delete accounts |
-| **Media** | Browse uploaded photos and videos, delete files |
-| **Feedback** | Inbox for "Report a problem" messages from users |
-| **Identity lookup** | Unmask the author of an anonymous post (see below) |
-| **Audit logs** | Read the staff audit log and verify its integrity |
-| **Settings** | Site-wide branding, feature toggles (for example anonymous posting), limits, moderation rules, maintenance mode |
-| **Account** | Your own staff account and two-factor setup |
+## Sensitive features
 
 ### Identity lookup (unmasking anonymous authors)
 This is the most sensitive feature, and it has several safeguards:
@@ -66,51 +51,12 @@ Every staff action is recorded in a hash-chained, HMAC-signed log. From the **Au
 
 ---
 
-## Project structure
-
-```
-src/
-├── app/
-│   ├── login/                 # Staff sign-in
-│   └── (panel)/               # Pages behind the sidebar layout
-│       ├── page.tsx           # Dashboard
-│       ├── reports/  posts/  comments/  abuse/
-│       ├── users/  media/  feedback/
-│       ├── identity/  audit-logs/
-│       ├── settings/  account/
-│       └── layout.tsx         # Sidebar + auth / permission gate
-├── components/
-│   ├── admin/                 # app sidebar, permissions editor, shared admin pieces
-│   ├── common/                # theme picker
-│   └── ui/                    # shadcn/ui components
-├── hooks/
-├── lib/                       # api client, socket, theme, types
-└── providers/
-```
-
----
-
 ## Getting started
 
 ### Requirements
 - Node.js 20+
-- The **DualSphere backend** running (by default at `http://localhost:4000`)
+- The **DualSphere backend** running
 - A staff account. The backend's seed script (`npm run db:seed`) creates the first admin from that repo's `.env`.
-
-### Setup
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Create your local environment file
-cp .env.example .env.local
-
-# 3. Start the dev server (port 3001)
-npm run dev
-```
-
-Open http://localhost:3001 and sign in with a staff account.
 
 ### Environment variables
 
@@ -122,15 +68,6 @@ Set these in `.env.local`. They are public, browser-side values. **Never put sec
 | `NEXT_PUBLIC_FRONTEND_URL` | URL of the user-facing web app (used for "view on site" links) |
 
 > `.env.local` is gitignored. Only `.env.example` is committed.
-
-### Scripts
-
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start the dev server on port 3001 |
-| `npm run build` | Production build |
-| `npm start` | Serve the production build on port 3001 |
-| `npm run lint` | Run ESLint |
 
 ---
 
