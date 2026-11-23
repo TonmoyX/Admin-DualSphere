@@ -24,6 +24,12 @@ const SECTION: { path: string; perm?: Permission; admin?: true }[] = [
   { path: "/comments", perm: "comments.view" },
   { path: "/feedback", perm: "feedback.view" },
   { path: "/users", perm: "users.view" },
+  { path: "/communities", perm: "communities.view" },
+  { path: "/ad-review", perm: "ads.review" },
+  { path: "/advertisers", perm: "ads.manage" },
+  { path: "/payouts", perm: "payouts.view" },
+  { path: "/payments", perm: "finance.view" },
+  { path: "/revenue", perm: "finance.view" },
   { path: "/media", perm: "media.view" },
 ];
 

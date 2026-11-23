@@ -15,7 +15,7 @@ export interface Me {
 
 export type Permission =
   | "dashboard.view" | "reports.view" | "reports.resolve" | "posts.view" | "posts.moderate" | "comments.view" | "comments.moderate"
-  | "abuse.view" | "feedback.view" | "users.view" | "users.ban" | "users.manage" | "media.view" | "media.delete" | "audit.view" | "settings.manage";
+  | "abuse.view" | "feedback.view" | "communities.view" | "communities.manage" | "ads.review" | "ads.manage" | "payouts.view" | "payouts.approve" | "finance.view" | "users.view" | "users.ban" | "users.manage" | "media.view" | "media.delete" | "audit.view" | "settings.manage";
 
 export interface PermissionInfo { key: Permission; group: string; label: string; desc: string; default: boolean }
 

@@ -3,8 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity, Ban, ExternalLink, FileText, Flag, Fingerprint, Image as ImageIcon, LayoutDashboard, LogOut, MessageSquare,
-  MessageSquareWarning, ScrollText, Settings, Shield, UserCog, Users,
-} from "lucide-react";
+  MessageSquareWarning, ScrollText, Settings, Shield, UserCog, Users, UsersRound, Megaphone, Store, Banknote, CreditCard, LineChart, BarChart3, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -33,7 +32,22 @@ const groups: { label: string; items: Item[] }[] = [
   },
   {
     label: "People",
-    items: [{ href: "/users", label: "Users", Icon: Users, perm: "users.view" }],
+    items: [
+      { href: "/users", label: "Users", Icon: Users, perm: "users.view" },
+      { href: "/communities", label: "Communities", Icon: UsersRound, perm: "communities.view" },
+    ],
+  },
+  {
+    label: "Money & ads",
+    items: [
+      { href: "/ads-overview", label: "Ads overview", Icon: BarChart3, perm: "ads.manage" },
+      { href: "/ad-review", label: "Live ads", Icon: Megaphone, perm: "ads.review" },
+      { href: "/ad-reports", label: "Ad reports", Icon: ShieldAlert, perm: "ads.review" },
+      { href: "/advertisers", label: "Advertisers", Icon: Store, perm: "ads.manage" },
+      { href: "/payouts", label: "Payouts & KYC", Icon: Banknote, perm: "payouts.view" },
+      { href: "/payments", label: "Payments", Icon: CreditCard, perm: "finance.view" },
+      { href: "/revenue", label: "Revenue", Icon: LineChart, perm: "finance.view" },
+    ],
   },
   {
     label: "Security",
