@@ -10,7 +10,8 @@ import { Ago, FilterChips, PageHeader, Pagination, Spinner, StatusPill, Visibili
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { errorMessage, get, patch } from "@/lib/api";
+import { del, errorMessage, get, patch } from "@/lib/api";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Paged, Report } from "@/lib/types";
 import { useAdminAuth } from "@/providers/providers";
 
@@ -31,6 +32,19 @@ function ReportCard({ r }: { r: Report }) {
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
+  // Admin only: permanent delete of the report (+ other reports on the same item), optionally the item itself
+  const [confirmDel, setConfirmDel] = useState(false);
+  const remove = useMutation({
+    mutationFn: (withContent: boolean) => del<{ reportsDeleted: number; contentDeleted: string }>(`/moderation/reports/${r.id}?content=${withContent}`),
+    onSuccess: (res) => {
+      toast.success(res.contentDeleted !== "none" ? `Deleted the ${res.contentDeleted} and ${res.reportsDeleted} report(s) permanently` : `Deleted ${res.reportsDeleted} report(s) permanently`);
+      setConfirmDel(false);
+      qc.invalidateQueries({ queryKey: ["reports"] });
+      qc.invalidateQueries({ queryKey: ["stats"] });
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  });
+  const contentExists = r.targetType !== "user" && r.target.content != null;
   const postId = r.targetType === "post" ? r.targetId : r.target.postId;
   const anonPost = r.targetType === "post" && r.target.visibility === "anonymous";
   const isUser = r.targetType === "user";
@@ -43,6 +57,11 @@ function ReportCard({ r }: { r: Report }) {
         <span className="text-muted-foreground">{isUser ? "profile" : r.targetType} reported by <b className="text-foreground">@{r.reporter}</b></span>
         <StatusPill status={r.status} />
         <span className="ml-auto"><Ago date={r.createdAt} /></span>
+        {isAdmin && (
+          <Button size="icon-sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setConfirmDel(true)} aria-label="Delete permanently" title="Delete permanently">
+            <Trash2 />
+          </Button>
+        )}
       </div>
       {r.details && <p className="mb-3 rounded-lg bg-muted/50 px-3 py-2 text-sm italic">“{r.details}”</p>}
 
@@ -90,6 +109,33 @@ function ReportCard({ r }: { r: Report }) {
           Resolved by @{r.reviewer ?? "system"} <Ago date={r.reviewedAt} />{r.resolutionNote ? ` — “${r.resolutionNote}”` : ""}
         </p>
       )}
+      <Dialog open={confirmDel} onOpenChange={(o) => !remove.isPending && setConfirmDel(o)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete permanently?</DialogTitle>
+            <DialogDescription>
+              This removes the report{r.target.reportsCount && r.target.reportsCount > 1 ? ` and the other ${r.target.reportsCount - 1} report(s) on the same ${r.targetType}` : ""} from the database. It can&apos;t be undone and is recorded in the audit log.
+            </DialogDescription>
+          </DialogHeader>
+          {contentExists && (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm">
+              <b>Delete {r.targetType} too</b> also erases the reported {r.targetType}
+              {r.targetType === "post" ? " with its comments, likes and photos/videos" : r.targetType === "comment" ? " and its replies" : " and its files (it won't be kept in the 90-day archive)"}.
+            </p>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setConfirmDel(false)} disabled={remove.isPending}>Cancel</Button>
+            <Button variant={contentExists ? "outline" : "destructive"} onClick={() => remove.mutate(false)} disabled={remove.isPending}>
+              {remove.isPending && remove.variables === false ? <Spinner /> : <Trash2 />} Delete report
+            </Button>
+            {contentExists && (
+              <Button variant="destructive" onClick={() => remove.mutate(true)} disabled={remove.isPending}>
+                {remove.isPending && remove.variables === true ? <Spinner /> : <Trash2 />} Delete {r.targetType} too
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

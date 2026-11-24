@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { del, errorMessage, get, patch, post } from "@/lib/api";
 import { useAdminAuth } from "@/providers/providers";
+import { PurgeButton } from "@/components/admin/purge";
 
 type Status = "open" | "resolved";
 
@@ -177,6 +178,14 @@ export default function AbusePage() {
                             <RotateCcw /> Restore post
                           </Button>
                         )}
+                        <PurgeButton
+                          size="xs"
+                          label="Delete"
+                          what="this post"
+                          details="The post, its comments, likes and photos/videos are erased."
+                          onConfirm={() => del(`/moderation/posts/${p.id}/purge`)}
+                          onDone={refresh}
+                        />
                       </div>
                     )}
                   </div>

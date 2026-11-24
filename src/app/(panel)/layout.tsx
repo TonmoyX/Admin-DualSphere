@@ -66,6 +66,10 @@ export default function PanelLayout({ children }: { children: ReactNode }) {
       toast.info("New problem report", { action: { label: "View", onClick: () => router.push("/feedback") } });
       qc.invalidateQueries({ queryKey: ["feedback"] });
     };
+    const onAppeal = (p: { username: string }) => {
+      toast.info(`Ban appeal from @${p.username}`, { action: { label: "Review", onClick: () => router.push("/appeals") } });
+      qc.invalidateQueries({ queryKey: ["appeals"] });
+    };
     const onRevoked = () => { setMe(null); router.replace("/login"); };
     const onPerms = () => { void refetch(); toast.info("Your permissions were updated by an admin"); };
     s.on("admin:report", onReport);
@@ -73,6 +77,7 @@ export default function PanelLayout({ children }: { children: ReactNode }) {
     s.on("admin:signup", onSignup);
     s.on("presence", onPresence);
     s.on("admin:feedback", onFeedback);
+    s.on("admin:appeal", onAppeal);
     s.on("session:revoked", onRevoked);
     s.on("permissions:update", onPerms);
     return () => {
@@ -82,6 +87,7 @@ export default function PanelLayout({ children }: { children: ReactNode }) {
       s.off("admin:signup", onSignup);
       s.off("presence", onPresence);
       s.off("admin:feedback", onFeedback);
+      s.off("admin:appeal", onAppeal);
       s.off("session:revoked", onRevoked);
     };
   }, [me, qc, router, setMe, refetch]);

@@ -76,6 +76,8 @@ export function StatusPill({ status }: { status: string }) {
     removed: "bg-destructive/15 text-destructive",
     live: "bg-anon/15 text-anon",
     active: "bg-anon/15 text-anon",
+    approved: "bg-emerald-500/15 text-emerald-500",
+    rejected: "bg-destructive/15 text-destructive",
   };
   return <Badge className={cn("border-0 text-[11px] font-semibold", map[status] ?? "bg-muted")}>{humanize(status)}</Badge>;
 }

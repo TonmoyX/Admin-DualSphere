@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { del, errorMessage, get, post } from "@/lib/api";
 import type { AdminComment, Paged } from "@/lib/types";
 import { useAdminAuth } from "@/providers/providers";
+import { PurgeButton } from "@/components/admin/purge";
 
 const FRONTEND = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:3000";
 
@@ -67,6 +68,7 @@ export default function CommentsPage() {
                     ) : (
                       <Button variant="ghost" size="icon-sm" aria-label="Remove" className="text-destructive" onClick={() => setRemoving(c.id)}><Trash2 /></Button>
                     )}
+                    <PurgeButton iconOnly label="Delete permanently" what="this comment" details="The comment and all its replies are erased." onConfirm={() => del(`/moderation/comments/${c.id}/purge`)} onDone={refresh} />
                   </div>
                 </TableCell>
               </TableRow>

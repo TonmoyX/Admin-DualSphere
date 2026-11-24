@@ -1,7 +1,8 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BadgeCheck, Ban, KeyRound, LogOut, RotateCcw, Search, ShieldCheck, ShieldOff, Trash2, UserCheck } from "lucide-react";
+import Link from "next/link";
+import { BadgeCheck, Ban, FileSearch, KeyRound, LogOut, RotateCcw, Search, ShieldCheck, ShieldOff, Trash2, UserCheck } from "lucide-react";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -123,6 +124,9 @@ function UserSheet({ id, onClose }: { id: string | null; onClose: () => void }) 
                 )}
                 {can("users.manage") && !isSelf && (
                   <Button variant="outline" size="sm" onClick={() => act(() => post(`/admin/users/${u.id}/revoke-sessions`), "Sessions revoked")}><LogOut /> Revoke sessions</Button>
+                )}
+                {isAdmin && !isSelf && (
+                  <Button variant="outline" size="sm" asChild><Link href={`/investigations?q=${encodeURIComponent(u.username)}`}><FileSearch /> Investigate</Link></Button>
                 )}
                 {can("users.manage") && !isSelf && u.mfaEnabled && (
                   <Button

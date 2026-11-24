@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { errorMessage, get, post } from "@/lib/api";
+import { del, errorMessage, get, post } from "@/lib/api";
 import { useAdminAuth } from "@/providers/providers";
+import { PurgeButton } from "@/components/admin/purge";
 
 const FRONTEND = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:3000";
 
@@ -134,6 +135,14 @@ function DetailSheet({ id, onClose }: { id: string | null; onClose: () => void }
                   {c.deletedAt
                     ? <Button size="sm" variant="secondary" onClick={() => restore.mutate()} disabled={restore.isPending}><Undo2 /> Restore</Button>
                     : <Button size="sm" variant="destructive" onClick={() => setDialog("delete")}><Trash2 /> Delete</Button>}
+                  {c.deletedAt && (
+                    <PurgeButton
+                      what={`“${c.name}”`}
+                      details="The community, its members and every post in it (with comments, likes and files) are erased."
+                      onConfirm={() => del(`/admin/communities/${id}/purge`)}
+                      onDone={() => { qc.invalidateQueries({ queryKey: ["admin-communities"] }); onClose(); }}
+                    />
+                  )}
                 </div>
               </section>
             )}

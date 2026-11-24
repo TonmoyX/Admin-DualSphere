@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import { Ago, FilterChips, PageHeader, ReasonDialog, Spinner } from "@/components/admin/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { errorMessage, get, post } from "@/lib/api";
+import { del, errorMessage, get, post } from "@/lib/api";
 import { useAdminAuth } from "@/providers/providers";
+import { PurgeButton } from "@/components/admin/purge";
 
 type Status = "open" | "actioned" | "dismissed";
 interface Item {
@@ -46,6 +47,9 @@ export default function AdReportsPage() {
               <span className="font-semibold">{r.business.name}</span>
               <span className="text-muted-foreground">· {r.campaign.name}</span>
               <Badge variant="outline" className="capitalize">{r.ad.status === "rejected" ? "taken down" : r.ad.status.replace("_", " ")}</Badge>
+              <span className="order-last ml-auto">
+                <PurgeButton iconOnly what={`the ${r.reports} report(s) on this ad`} details="Only the reports are erased. To delete the ad itself, use Live ads." onConfirm={() => del(`/admin/ads/reports/${r.creativeId}`)} onDone={refresh} />
+              </span>
               <span className="ml-auto text-muted-foreground"><Ago date={r.lastAt} /></span>
             </div>
             <div className="mb-2 flex flex-wrap gap-1.5">

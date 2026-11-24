@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { Ago, FilterChips, MiniAvatar, PageHeader, Pagination, Spinner, StatusPill } from "@/components/admin/common";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { errorMessage, get, patch } from "@/lib/api";
+import { del, errorMessage, get, patch } from "@/lib/api";
+import { PurgeButton } from "@/components/admin/purge";
 
 interface Feedback {
   id: string;
@@ -67,6 +68,7 @@ export default function FeedbackPage() {
                 ) : (
                   <Button size="xs" variant="ghost" onClick={() => setState(f.id, "new")}><RotateCcw /> Reopen</Button>
                 )}
+                <PurgeButton iconOnly what="this feedback" onConfirm={() => del(`/admin/feedback/${f.id}`)} onDone={() => qc.invalidateQueries({ queryKey: ["feedback"] })} />
               </span>
             </div>
           </div>

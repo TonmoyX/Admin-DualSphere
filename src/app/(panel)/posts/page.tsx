@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { del, errorMessage, get, post } from "@/lib/api";
 import type { AdminPost, Paged } from "@/lib/types";
 import { useAdminAuth } from "@/providers/providers";
+import { PurgeButton } from "@/components/admin/purge";
 
 const FRONTEND = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:3000";
 
@@ -89,6 +90,7 @@ export default function PostsPage() {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+              <PurgeButton iconOnly what="this post" details="The post, its comments, likes, tags and photos/videos are erased." onConfirm={() => del(`/moderation/posts/${p.id}/purge`)} onDone={refresh} />
             </div>
           ))}
           {data && data.items.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">No posts match.</p>}

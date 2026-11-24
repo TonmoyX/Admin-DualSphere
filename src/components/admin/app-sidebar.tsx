@@ -1,15 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   Activity, Ban, ExternalLink, FileText, Flag, Fingerprint, Image as ImageIcon, LayoutDashboard, LogOut, MessageSquare,
-  MessageSquareWarning, ScrollText, Settings, Shield, UserCog, Users, UsersRound, Megaphone, Store, Banknote, CreditCard, LineChart, BarChart3, ShieldAlert } from "lucide-react";
+  MessageSquareWarning, ScrollText, Settings, Shield, UserCog, Users, UsersRound, Megaphone, Store, Banknote, CreditCard, LineChart, BarChart3, ShieldAlert, Scale, FileSearch, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
-  SidebarMenu, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem,
+  SidebarMenu, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { get } from "@/lib/api";
 import type { Permission } from "@/lib/types";
 import { useAdminAuth } from "@/providers/providers";
@@ -17,7 +19,7 @@ import { MiniAvatar, RolePill } from "./common";
 
 const FRONTEND = process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:3000";
 
-type Item = { href: string; label: string; Icon: typeof Users; admin?: boolean; perm?: Permission; badge?: "reports" | "flags" };
+type Item = { href: string; label: string; Icon: typeof Users; admin?: boolean; perm?: Permission; badge?: "reports" | "flags" | "appeals" };
 const groups: { label: string; items: Item[] }[] = [
   { label: "Overview", items: [{ href: "/", label: "Dashboard", Icon: LayoutDashboard, perm: "dashboard.view" }] },
   {
@@ -34,6 +36,7 @@ const groups: { label: string; items: Item[] }[] = [
     label: "People",
     items: [
       { href: "/users", label: "Users", Icon: Users, perm: "users.view" },
+      { href: "/appeals", label: "Ban appeals", Icon: Scale, badge: "appeals", perm: "users.ban" },
       { href: "/communities", label: "Communities", Icon: UsersRound, perm: "communities.view" },
     ],
   },
@@ -52,6 +55,7 @@ const groups: { label: string; items: Item[] }[] = [
   {
     label: "Security",
     items: [
+      { href: "/investigations", label: "Investigations", Icon: FileSearch, admin: true },
       { href: "/identity", label: "Identity lookup", Icon: Fingerprint, admin: true },
       { href: "/audit-logs", label: "Audit log", Icon: ScrollText, perm: "audit.view" },
     ],
@@ -66,8 +70,17 @@ const groups: { label: string; items: Item[] }[] = [
   },
 ];
 
+const isActive = (href: string, pathname: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
 export function AppSidebar({ online }: { online: number | null }) {
   const pathname = usePathname();
+  const { state: sidebarState } = useSidebar();
+  // Collapsible sections (▾). The section holding the current page opens by itself; a click overrides it.
+  // The sidebar lives in the layout, so these choices survive navigating between pages.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const currentGroup = groups.find((g) => g.items.some((i) => isActive(i.href, pathname)))?.label;
+  const isOpen = (label: string) => openGroups[label] ?? label === currentGroup;
+  const toggleGroup = (label: string) => setOpenGroups((o) => ({ ...o, [label]: !(o[label] ?? label === currentGroup) }));
   const router = useRouter();
   const { me, isAdmin, can, logout } = useAdminAuth();
   const { data: stats } = useQuery({
@@ -75,6 +88,12 @@ export function AppSidebar({ online }: { online: number | null }) {
     queryFn: () => get<{ totals: { pending_reports: number; flagged_posts: number } }>("/admin/stats"),
     refetchInterval: 60_000,
     enabled: can("dashboard.view"),
+  });
+  const { data: appeals } = useQuery({
+    queryKey: ["appeals", "count"],
+    queryFn: () => get<{ pending: number }>("/moderation/appeals/count"),
+    refetchInterval: 60_000,
+    enabled: can("users.ban"),
   });
 
   return (
@@ -92,16 +111,39 @@ export function AppSidebar({ online }: { online: number | null }) {
         {groups.map((g) => {
           const items = g.items.filter((i) => (!i.admin || isAdmin) && (!i.perm || can(i.perm)));
           if (!items.length) return null;
+          const countOf = (i: Item) => (i.badge === "reports" ? stats?.totals.pending_reports : i.badge === "flags" ? stats?.totals.flagged_posts : i.badge === "appeals" ? appeals?.pending : 0) ?? 0;
+          // In icon-only mode there are no section headers, so every item shows
+          const open = sidebarState === "collapsed" || isOpen(g.label);
+          const hiddenCount = open ? 0 : items.reduce((n, i) => n + countOf(i), 0);
           return (
-            <SidebarGroup key={g.label}>
-              <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
-              <SidebarGroupContent>
+            <SidebarGroup key={g.label} className="py-1">
+              <SidebarGroupLabel asChild>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(g.label)}
+                  aria-expanded={open}
+                  className="flex h-11 w-full cursor-pointer items-center gap-2 text-[17px] transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:size-5!"
+                >
+                  <span className="flex-1 text-left">{g.label}</span>
+                  {hiddenCount > 0 && <span className="rounded-full bg-destructive/20 px-1.5 text-xs font-semibold text-destructive">{hiddenCount}</span>}
+                  <ChevronDown className={cn("transition-transform delay-75 duration-300 ease-out", !open && "-rotate-90")} />
+                </button>
+              </SidebarGroupLabel>
+              {/* Smooth open/close: the row animates between 0fr and 1fr (slight delay so it feels soft) */}
+              <div
+                className={cn(
+                  "grid transition-[grid-template-rows,opacity] delay-75 duration-300 ease-out",
+                  open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                )}
+                inert={!open}
+              >
+              <SidebarGroupContent className="overflow-hidden">
                 <SidebarMenu>
                   {items.map((i) => {
-                    const count = i.badge === "reports" ? stats?.totals.pending_reports : i.badge === "flags" ? stats?.totals.flagged_posts : 0;
+                    const count = countOf(i);
                     return (
                       <SidebarMenuItem key={i.href}>
-                        <SidebarMenuButton asChild isActive={i.href === "/" ? pathname === "/" : pathname.startsWith(i.href)} tooltip={i.label}>
+                        <SidebarMenuButton asChild isActive={isActive(i.href, pathname)} tooltip={i.label} className="h-11 gap-3.5 text-[17px] [&_svg]:size-6 group-data-[collapsible=icon]:[&_svg]:size-5">
                           <Link href={i.href}><i.Icon /> <span>{i.label}</span></Link>
                         </SidebarMenuButton>
                         {!!count && <SidebarMenuBadge className="bg-destructive/20 text-destructive">{count}</SidebarMenuBadge>}
@@ -110,6 +152,7 @@ export function AppSidebar({ online }: { online: number | null }) {
                   })}
                 </SidebarMenu>
               </SidebarGroupContent>
+              </div>
             </SidebarGroup>
           );
         })}
@@ -117,13 +160,13 @@ export function AppSidebar({ online }: { online: number | null }) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Open site">
+            <SidebarMenuButton asChild tooltip="Open site" className="h-11 gap-3.5 text-[17px] [&_svg]:size-6 group-data-[collapsible=icon]:[&_svg]:size-5">
               <a href={FRONTEND} target="_blank" rel="noreferrer"><ExternalLink /> <span>Open site</span></a>
             </SidebarMenuButton>
           </SidebarMenuItem>
           {online !== null && (
             <SidebarMenuItem>
-              <SidebarMenuButton tooltip={`${online} online`}>
+              <SidebarMenuButton tooltip={`${online} online`} className="h-11 gap-3.5 text-[17px] [&_svg]:size-6 group-data-[collapsible=icon]:[&_svg]:size-5">
                 <Activity className="text-anon" /> <span>{online} connected now</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
