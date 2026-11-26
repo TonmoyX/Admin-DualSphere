@@ -51,6 +51,7 @@ interface Message {
   editHistory: { content: string; editedAt: string }[];
   deleted: { reason: string; at: string } | null;
   removedByModerator: boolean;
+  anonymous?: boolean;
   sender: Person | null;
 }
 interface AnonPost {
@@ -389,6 +390,7 @@ function Bubble({ m, mine }: { m: Message; mine: boolean }) {
             </Badge>
           )}
           {m.removedByModerator && <Badge variant="outline" className="h-4 px-1 text-[10px]">removed by mod</Badge>}
+          {m.anonymous && <Badge className="h-4 border-0 bg-anon/15 px-1 text-[10px] text-anon" title="Other members saw this as Anonymous"><VenetianMask className="size-2.5" /> sent anonymously</Badge>}
           {m.editHistory.length > 0 && (
             <button type="button" onClick={() => setShowHistory((s) => !s)} className="inline-flex items-center gap-0.5 text-primary hover:underline">
               <History className="size-3" /> edited ×{m.editHistory.length}
